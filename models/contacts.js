@@ -84,7 +84,7 @@ const updateContact = async (contactId, body) => {
   if (inx === -1) {
     return null;
   }
-  list[inx] = { id: nanoid(), name, email, phone };
+  list[inx] = { id: contactId, name, email, phone };
   await updateContactsList(list);
 
   return list[inx];
