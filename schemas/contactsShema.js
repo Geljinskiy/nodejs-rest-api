@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-const contactsShema = Joi.object({
+const contactsSchema = Joi.object({
   name: Joi.string().min(3).max(21).required().messages({
     "string.pattern.base":
       "'name' mustn't include less than 3 and more than 21 letters",
@@ -19,6 +19,11 @@ const contactsShema = Joi.object({
         "The phone number must start with a '+' sign followed by 6 to 14 digits.",
       "any.required": "missing required field 'phone'",
     }),
+  favorite: Joi.boolean(),
 });
 
-export default contactsShema;
+const contactsUpdateFavSchema = Joi.object({
+  favorite: Joi.boolean().required(),
+});
+
+export default { contactsSchema, contactsUpdateFavSchema };

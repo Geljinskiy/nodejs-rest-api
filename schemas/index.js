@@ -1,1 +1,1 @@
-export { default as contactsShema } from "./contactsShema.js";
+export { default as joiSchema } from "./contactsShema.js";
