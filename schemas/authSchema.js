@@ -9,9 +9,21 @@ const authSchema = Joi.object({
     "any.required": "missing required field 'email'",
   }),
   subscription: Joi.string().valid("starter", "pro", "business").messages({
-    "any.required":
-      "subscription value must be one of these secelctions: 'starter'  'pro' 'business'",
+    "any.only":
+      "subscription must be one of these selections: 'starter', 'pro', 'business'",
   }),
 });
 
-export default { authSchema };
+const userUpdatePlan = Joi.object({
+  subscription: Joi.string()
+    .valid("starter", "pro", "business")
+    .required()
+    .messages({
+      "any.required":
+        "subscription field is required. It must be one of these selections: 'starter', 'pro', 'business'",
+      "any.only":
+        "subscription field must be one of these selections: 'starter', 'pro', 'business'",
+    }),
+});
+
+export default { authSchema, userUpdatePlan };

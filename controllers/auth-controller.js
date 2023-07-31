@@ -19,9 +19,12 @@ const registration = async (req, res) => {
 
   const hashedPassword = await bcrypt.hash(password, 10);
 
-  const newUser = await User.create({ ...req.body, password: hashedPassword });
+  const { subscription } = await User.create({
+    ...req.body,
+    password: hashedPassword,
+  });
 
-  res.status(200).json(newUser);
+  res.status(201).json({ user: { email, subscription } });
 };
 
 const login = async (req, res) => {
@@ -35,7 +38,7 @@ const login = async (req, res) => {
 
   const { _id: userId, subscription } = user;
 
-  const comparedPassword = bcrypt.compare(password, user.password);
+  const comparedPassword = await bcrypt.compare(password, user.password);
   if (!comparedPassword) {
     throw HttpError(401, "Email or password is wrong");
   }
@@ -47,8 +50,6 @@ const login = async (req, res) => {
   const token = jwt.sign(payload, JWT_PHRASE, { expiresIn: "23h" });
 
   await User.findByIdAndUpdate(userId, { token }, { new: true });
-
-  console.log(user.token === token);
 
   res.status(200).json({
     token,
@@ -73,9 +74,23 @@ const current = async (req, res) => {
   });
 };
 
+const updateSubscription = async (req, res) => {
+  const { _id: userId } = req.user;
+  const { subscription } = req.body;
+
+  const updateUser = await User.findByIdAndUpdate(
+    userId,
+    { subscription },
+    { new: true }
+  );
+
+  res.status(200).json(updateUser);
+};
+
 export default {
   registration: cntrllrWrapper(registration),
   login: cntrllrWrapper(login),
   logout: cntrllrWrapper(logout),
   current: cntrllrWrapper(current),
+  updateSubscription: cntrllrWrapper(updateSubscription),
 };

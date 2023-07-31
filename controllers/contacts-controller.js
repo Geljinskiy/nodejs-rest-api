@@ -3,7 +3,15 @@ import { cntrllrWrapper } from "../decorators/index.js";
 import { Contact } from "../models/index.js";
 
 const getAll = async (req, res) => {
-  const list = await Contact.find();
+  const { _id: owner } = req.user;
+  const { page = 1, limit = 3, favorite = false } = req.query;
+
+  const skip = (page - 1) * limit;
+
+  const list = await Contact.find({ owner, favorite })
+    .skip(skip)
+    .limit(limit)
+    .populate("owner", "email subscription");
   res.status(200).json(list);
 };
 
@@ -20,7 +28,8 @@ const getById = async (req, res) => {
 };
 
 const add = async (req, res) => {
-  const createdContact = await Contact.create(req.body);
+  const { _id: owner } = req.user;
+  const createdContact = await Contact.create({ ...req.body, owner });
 
   res.status(201).json(createdContact);
 };
