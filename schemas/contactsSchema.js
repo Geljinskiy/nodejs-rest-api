@@ -10,7 +10,6 @@ const contactsSchema = Joi.object({
     "string.pattern.base": "Please provide a valid email address",
     "any.required": "missing required field 'email'",
   }),
-  // in this validation, phone number must include '+' symbol
   phone: Joi.string()
     .pattern(/^\+(?:[0-9] ?){6,14}[0-9]$/)
     .required()
