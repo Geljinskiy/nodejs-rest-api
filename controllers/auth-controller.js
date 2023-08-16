@@ -30,8 +30,6 @@ const registration = async (req, res) => {
     { s: "250", r: "g", d: "wavatar" },
     false
   );
-  console.log("avatarURL :", avatarURL);
-
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const { subscription } = await User.create({
