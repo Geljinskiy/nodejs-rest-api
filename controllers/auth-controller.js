@@ -115,6 +115,7 @@ const updateAvatar = async (req, res) => {
     path.extname(originalname) !== ".png" &&
     path.extname(originalname) !== ".jpg"
   ) {
+    await fs.unlink(oldPath);
     throw HttpError(400, "incorrect file type (jpg and png only allowed)");
   }
 
