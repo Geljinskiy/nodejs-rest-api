@@ -2,7 +2,11 @@
 import express from "express";
 // local imports
 import validateBody from "../../decorators/validateBody.js";
-import { isEmptyBody, authenticate } from "../../middlewares/index.js";
+import {
+  isEmptyBody,
+  authenticate,
+  upload,
+} from "../../middlewares/index.js";
 import { authJoiSchema } from "../../schemas/index.js";
 import authController from "../../controllers/auth-controller.js";
 
@@ -26,12 +30,19 @@ router.post("/logout", authenticate, authController.logout);
 
 router.get("/current", authenticate, authController.current);
 
-isEmptyBody(),
-  router.patch(
-    "/subscription",
-    authenticate,
-    validateBody(authJoiSchema.userUpdatePlan),
-    authController.updateSubscription
-  );
+router.patch(
+  "/avatars",
+  authenticate,
+  upload.single("avatar"),
+  authController.updateAvatar
+);
+
+router.patch(
+  "/subscription",
+  isEmptyBody(),
+  authenticate,
+  validateBody(authJoiSchema.userUpdatePlan),
+  authController.updateSubscription
+);
 
 export default router;

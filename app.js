@@ -3,6 +3,7 @@ import express from "express";
 import logger from "morgan";
 import cors from "cors";
 import dotenv from "dotenv";
+import fs from "fs/promises";
 // local imports
 import { authRouter, contactsRouter } from "./routes/api/index.js";
 
@@ -14,6 +15,7 @@ app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
 
+app.use(express.static("public"));
 app.use("/api/contacts", contactsRouter);
 app.use("/users", authRouter);
 
@@ -27,4 +29,3 @@ app.use((err, req, res, next) => {
 });
 
 export default app;
-

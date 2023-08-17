@@ -1,11 +1,19 @@
-import { HttpError } from "../helpers/index.js";
-import { cntrllrWrapper } from "../decorators/index.js";
-import { User } from "../models/index.js";
+// libs imports
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { token } from "morgan";
+import path from "path";
+import fs from "fs/promises";
+import jimp from "jimp";
+import gravatar from "gravatar";
+// local imports
+import { HttpError } from "../helpers/index.js";
+import { cntrllrWrapper } from "../decorators/index.js";
+import { User } from "../models/index.js";
+
 dotenv.config();
+
+const avatarsPath = path.resolve("public", "avatars");
 
 const { JWT_PHRASE } = process.env;
 
@@ -17,10 +25,16 @@ const registration = async (req, res) => {
     throw HttpError(409, "Email in use");
   }
 
+  const avatarURL = gravatar.url(
+    email,
+    { s: "250", r: "g", d: "wavatar" },
+    false
+  );
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const { subscription } = await User.create({
     ...req.body,
+    avatarURL,
     password: hashedPassword,
   });
 
@@ -87,10 +101,42 @@ const updateSubscription = async (req, res) => {
   res.status(200).json(updateUser);
 };
 
+const updateAvatar = async (req, res) => {
+  const { _id: userId } = req.user;
+  const userIdString = userId.toString();
+  if (!req.file) {
+    throw HttpError(400, "no file found");
+  }
+  const { path: oldPath, filename, originalname } = req.file;
+
+  if (
+    path.extname(originalname) !== ".png" &&
+    path.extname(originalname) !== ".jpg"
+  ) {
+    await fs.unlink(oldPath);
+    throw HttpError(400, "incorrect file type (jpg and png only allowed)");
+  }
+
+  const image = await jimp.read(oldPath);
+
+  image.cover(250, 250);
+
+  await image.writeAsync(oldPath);
+
+  const newPath = path.join(avatarsPath, filename);
+  await fs.rename(oldPath, newPath);
+
+  const avatarURL = path.join("avatars", filename);
+  await User.findByIdAndUpdate(userId, { avatarURL });
+
+  res.status(200).json({ avatarURL });
+};
+
 export default {
   registration: cntrllrWrapper(registration),
   login: cntrllrWrapper(login),
   logout: cntrllrWrapper(logout),
   current: cntrllrWrapper(current),
   updateSubscription: cntrllrWrapper(updateSubscription),
+  updateAvatar: cntrllrWrapper(updateAvatar),
 };
