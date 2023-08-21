@@ -2,11 +2,7 @@
 import express from "express";
 // local imports
 import validateBody from "../../decorators/validateBody.js";
-import {
-  isEmptyBody,
-  authenticate,
-  upload,
-} from "../../middlewares/index.js";
+import { isEmptyBody, authenticate, upload } from "../../middlewares/index.js";
 import { authJoiSchema } from "../../schemas/index.js";
 import authController from "../../controllers/auth-controller.js";
 
@@ -44,5 +40,13 @@ router.patch(
   validateBody(authJoiSchema.userUpdatePlan),
   authController.updateSubscription
 );
+
+router.post(
+  "/verify",
+  validateBody(authJoiSchema.userEmailSchema),
+  authController.resendVerifyEmail
+);
+
+router.get("/verify/:verificationToken", authController.verifycationByToken);
 
 export default router;

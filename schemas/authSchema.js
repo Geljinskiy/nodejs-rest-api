@@ -26,4 +26,11 @@ const userUpdatePlan = Joi.object({
     }),
 });
 
-export default { authSchema, userUpdatePlan };
+const userEmailSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    "string.pattern.base": "Please provide a valid email address",
+    "any.required": "missing required field 'email'",
+  }),
+});
+
+export default { authSchema, userUpdatePlan, userEmailSchema };

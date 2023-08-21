@@ -6,8 +6,9 @@ import path from "path";
 import fs from "fs/promises";
 import jimp from "jimp";
 import gravatar from "gravatar";
+import { nanoid } from "nanoid";
 // local imports
-import { HttpError } from "../helpers/index.js";
+import { HttpError, sendEmail, createVerifyEmail } from "../helpers/index.js";
 import { cntrllrWrapper } from "../decorators/index.js";
 import { User } from "../models/index.js";
 
@@ -32,10 +33,17 @@ const registration = async (req, res) => {
   );
   const hashedPassword = await bcrypt.hash(password, 10);
 
+  const verificationToken = nanoid();
+
+  const msg = createVerifyEmail({ email, verificationToken });
+
+  await sendEmail(msg);
+
   const { subscription } = await User.create({
     ...req.body,
     avatarURL,
     password: hashedPassword,
+    verificationToken,
   });
 
   res.status(201).json({ user: { email, subscription } });
@@ -50,9 +58,13 @@ const login = async (req, res) => {
     throw HttpError(401, "Email or password is wrong");
   }
 
+  if (!user.verify) {
+    throw HttpError(401, "User not verify");
+  }
+
   const { _id: userId, subscription } = user;
 
-  const comparedPassword = await bcrypt.compare(password, user.password);
+  const comparedPassword = bcrypt.compare(password, user.password);
   if (!comparedPassword) {
     throw HttpError(401, "Email or password is wrong");
   }
@@ -132,6 +144,43 @@ const updateAvatar = async (req, res) => {
   res.status(200).json({ avatarURL });
 };
 
+const verifycationByToken = async (req, res) => {
+  const { verificationToken } = req.params;
+  const isExist = await User.findOne({ verificationToken });
+  if (!isExist) {
+    throw HttpError(404, "User not found");
+  }
+
+  await User.findByIdAndUpdate(isExist._id, {
+    verificationToken: null,
+    verify: true,
+  });
+
+  res.status(200).json({
+    message: "Verification successful",
+  });
+};
+
+const resendVerifyEmail = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) {
+    throw HttpError(404, "Email not found");
+  }
+  if (user.verify) {
+    throw HttpError(400, "Verification has already been passed");
+  }
+
+  const msg = createVerifyEmail({
+    email,
+    verificationToken: user.verificationToken,
+  });
+
+  await sendEmail(msg);
+
+  res.status(200).json({ message: "Verification email sent" });
+};
+
 export default {
   registration: cntrllrWrapper(registration),
   login: cntrllrWrapper(login),
@@ -139,4 +188,6 @@ export default {
   current: cntrllrWrapper(current),
   updateSubscription: cntrllrWrapper(updateSubscription),
   updateAvatar: cntrllrWrapper(updateAvatar),
+  verifycationByToken: cntrllrWrapper(verifycationByToken),
+  resendVerifyEmail: cntrllrWrapper(resendVerifyEmail),
 };
